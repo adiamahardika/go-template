@@ -30,6 +30,7 @@ type Database struct {
 	URL          string        `mapstructure:"url" json:"url"`
 	Port         int           `mapstructure:"port" json:"port"`
 	Name         string        `mapstructure:"name" json:"name"`
+	Schema       string        `mapstructure:"schema" json:"schema"`
 	Flavor       string        `mapstructure:"flavor" json:"flavor"`
 	MaxIdleConns int           `mapstructure:"max_idle_conns" json:"max_idle_conns"`
 	MaxOpenConns int           `mapstructure:"max_open_conns" json:"max_open_conns"`
@@ -78,6 +79,7 @@ func LoadDatabaseConfig() DatabasePlatform {
 				URL:          viper.GetString("DB_POSTGRES_HOST"),
 				Port:         viper.GetInt("DB_POSTGRES_PORT"),
 				Name:         viper.GetString("DB_POSTGRES_NAME"),
+				Schema:       viper.GetString("DB_POSTGRES_SCHEMA"),
 				MaxIdleConns: viper.GetInt("DB_POSTGRES_MAX_IDLE_CONNS"),
 				MaxOpenConns: viper.GetInt("DB_POSTGRES_MAX_OPEN_CONNS"),
 				MaxLifetime:  viper.GetDuration("DB_POSTGRES_MAX_LIFE_TIME"),
@@ -91,6 +93,7 @@ func LoadDatabaseConfig() DatabasePlatform {
 				URL:          viper.GetString("DB_POSTGRES_HOST"),
 				Port:         viper.GetInt("DB_POSTGRES_PORT"),
 				Name:         viper.GetString("DB_POSTGRES_NAME"),
+				Schema:       viper.GetString("DB_POSTGRES_SCHEMA"),
 				MaxIdleConns: viper.GetInt("DB_POSTGRES_MAX_IDLE_CONNS"),
 				MaxOpenConns: viper.GetInt("DB_POSTGRES_MAX_OPEN_CONNS"),
 				MaxLifetime:  viper.GetDuration("DB_POSTGRES_MAX_LIFE_TIME"),

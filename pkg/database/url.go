@@ -40,6 +40,10 @@ func GetURL(arg *Args) (res *url.URL) {
 			arg.Values.Add("extra_float_digits", "-1")
 		}
 
+		if arg.Schema != "" {
+			arg.Values.Add("search_path", arg.Schema)
+		}
+
 		timeout := uint64(arg.Timeout.Seconds())
 		arg.Values.Add("connect_timeout", strconv.FormatUint(timeout, 10))
 	case mysqlSchema:

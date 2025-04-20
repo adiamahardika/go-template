@@ -34,6 +34,7 @@ type (
 		Host            string
 		Port            int
 		Database        string
+		Schema          string
 		Flavor          string
 		MaxIdleConns    int
 		MaxOpenConns    int

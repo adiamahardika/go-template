@@ -6,7 +6,8 @@ import (
 )
 
 type Main struct {
-	Todo TodoControllersInterface
+	Todo     TodoControllersInterface
+	Category CategoryControllersInterface 
 }
 
 type controller struct {
@@ -22,7 +23,8 @@ func Init(opts Options) *Main {
 	ctrl := &controller{opts}
 
 	m := &Main{
-		Todo: (*todoControllers)(ctrl),
+		Todo:     (*todoControllers)(ctrl),        
+		Category: (*categoryControllers)(ctrl),   
 	}
 
 	return m

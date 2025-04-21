@@ -7,6 +7,7 @@ import (
 
 type Main struct {
 	Todo TodoControllersInterface
+	Status StatusControllersInterface
 }
 
 type controller struct {
@@ -23,6 +24,7 @@ func Init(opts Options) *Main {
 
 	m := &Main{
 		Todo: (*todoControllers)(ctrl),
+		Status: (*statusControllers)(ctrl),
 	}
 
 	return m

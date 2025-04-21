@@ -8,6 +8,7 @@ import (
 
 type Main struct {
 	Todo TodoRepositoryInterface
+	Status StatusRepositoryInterface
 }
 
 type repository struct {
@@ -24,6 +25,7 @@ func Init(opts Options) *Main {
 
 	m := &Main{
 		Todo: (*todoRepository)(repo),
+		Status: (*statusRepository)(repo),
 	}
 
 	return m

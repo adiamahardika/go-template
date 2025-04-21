@@ -7,6 +7,7 @@ import (
 
 type Main struct {
 	Todo TodoUsecaseInterface
+	Status StatusUsecaseInterface
 }
 
 type usecase struct {
@@ -23,6 +24,7 @@ func Init(opts Options) *Main {
 
 	m := &Main{
 		Todo: (*todoUsecase)(ucs),
+		Status: (*statusUsecase)(ucs),
 	}
 
 	return m

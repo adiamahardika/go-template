@@ -13,5 +13,9 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main) {
 		{
 			todo.GET("", controller.Todo.GetAll)
 		}
+		status := v1.Group("/status")
+		{
+			status.GET("", controller.Status.GetAll)
+		}
 	}
 }

@@ -13,5 +13,10 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main) {
 		{
 			todo.GET("", controller.Todo.GetAll)
 		}
+
+		priority := v1.Group("/priority")
+		{
+			priority.GET("", controller.Priority.GetAll)
+		}
 	}
 }

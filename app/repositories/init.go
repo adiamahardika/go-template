@@ -8,6 +8,8 @@ import (
 
 type Main struct {
 	Todo TodoRepositoryInterface
+	Label LabelRepositoryInterface
+
 }
 
 type repository struct {
@@ -24,6 +26,7 @@ func Init(opts Options) *Main {
 
 	m := &Main{
 		Todo: (*todoRepository)(repo),
+		Label: (*labelRepository)(repo),
 	}
 
 	return m

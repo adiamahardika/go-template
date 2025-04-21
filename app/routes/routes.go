@@ -13,5 +13,10 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main) {
 		{
 			todo.GET("", controller.Todo.GetAll)
 		}
+
+		label := v1.Group("/label")
+		{
+			label.GET("", controller.Label.GetAll)
+		}
 	}
 }

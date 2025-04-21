@@ -7,5 +7,15 @@ import (
 )
 
 func ConfigureRouter(e *echo.Echo, controller *controllers.Main) {
-
+	v1 := e.Group("/v1")
+	{
+		todo := v1.Group("/todo")
+		{
+			todo.GET("", controller.Todo.GetAll)
+		}
+		status := v1.Group("/status")
+		{
+			status.GET("", controller.Status.GetAll)
+		}
+	}
 }

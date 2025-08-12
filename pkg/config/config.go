@@ -13,6 +13,12 @@ type Config struct {
 	ServiceEnvironment string           `mapstructure:"service_environment" json:"service_environment"`
 	ServicePort        string           `mapstructure:"service_port" json:"service_port"`
 	Database           DatabasePlatform `mapstructure:"database" json:"database"`
+	JWT                JWTConfig        `mapstructure:"jwt" json:"jwt"`
+}
+
+type JWTConfig struct {
+	Secret     string `mapstructure:"jwt_secret" json:"jwt_secret"`
+	ExpireTime int    `mapstructure:"jwt_expire_time" json:"jwt_expire_time"`
 }
 
 func NewConfig() *Config {
@@ -22,6 +28,10 @@ func NewConfig() *Config {
 		ServiceEnvironment: viper.GetString("APP_ENVIRONMENT"),
 		ServicePort:        viper.GetString("APP_PORT"),
 		Database:           LoadDatabaseConfig(),
+		JWT: JWTConfig{
+			Secret:     viper.GetString("JWT_SECRET"),
+			ExpireTime: viper.GetInt("JWT_EXPIRE_TIME"),
+		},
 	}
 }
 

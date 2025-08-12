@@ -7,6 +7,7 @@ import (
 
 type Main struct {
 	User UserUsecaseInterface
+	Auth AuthUsecaseInterface
 }
 
 type usecase struct {
@@ -23,6 +24,7 @@ func Init(opts Options) *Main {
 
 	m := &Main{
 		User: (*userUsecase)(ucs),
+		Auth: (*authUsecase)(ucs),
 	}
 
 	return m

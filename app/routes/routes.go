@@ -10,6 +10,10 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main) {
 	// API v1 group
 	v1 := e.Group("/api/v1")
 
+	authGroup := v1.Group("/auth")
+	authGroup.POST("/login", controller.Auth.Login)
+	authGroup.POST("/register", controller.Auth.Register)
+
 	// User routes
 	userGroup := v1.Group("/users")
 	userGroup.GET("", controller.User.GetAllUsers)

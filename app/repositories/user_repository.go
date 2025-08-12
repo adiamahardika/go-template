@@ -9,6 +9,9 @@ type userRepository repository
 type UserRepositoryInterface interface {
 	GetAllUsers(limit, offset int) ([]models.User, int64, error)
 	GetUserByID(id int) (*models.User, error)
+	GetUserByEmail(email string) (*models.User, error)
+	CreateUser(user *models.User) error
+	CheckEmailExists(email string) (bool, error)
 }
 
 func (r *userRepository) GetAllUsers(limit, offset int) ([]models.User, int64, error) {
@@ -46,4 +49,35 @@ func (r *userRepository) GetUserByID(id int) (*models.User, error) {
 	}
 
 	return &user, nil
+}
+
+func (r *userRepository) GetUserByEmail(email string) (*models.User, error) {
+	var user models.User
+
+	if err := r.Options.Postgres.
+		Preload("UserRoles").
+		Preload("UserRoles.Role").
+		First(&user, "email = ?", email).Error; err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (r *userRepository) CreateUser(user *models.User) error {
+	if err := r.Options.Postgres.Create(user).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *userRepository) CheckEmailExists(email string) (bool, error) {
+	var count int64
+	err := r.Options.Postgres.Model(&models.User{}).
+		Where("email = ? AND deleted_at IS NULL", email).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }

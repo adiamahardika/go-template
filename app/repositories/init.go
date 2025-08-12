@@ -7,6 +7,7 @@ import (
 )
 
 type Main struct {
+	User UserRepositoryInterface
 }
 
 type repository struct {
@@ -19,9 +20,11 @@ type Options struct {
 }
 
 func Init(opts Options) *Main {
-	// repo := &repository{opts}
+	repo := &repository{opts}
 
-	m := &Main{}
+	m := &Main{
+		User: (*userRepository)(repo),
+	}
 
 	return m
 }

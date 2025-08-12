@@ -7,5 +7,11 @@ import (
 )
 
 func ConfigureRouter(e *echo.Echo, controller *controllers.Main) {
+	// API v1 group
+	v1 := e.Group("/api/v1")
 
+	// User routes
+	userGroup := v1.Group("/users")
+	userGroup.GET("", controller.User.GetAllUsers)
+	userGroup.GET("/:id", controller.User.GetUserByID)
 }

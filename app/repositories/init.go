@@ -9,6 +9,7 @@ import (
 type Main struct {
 	User     UserRepositoryInterface
 	UserRole UserRolesRepositoryInterface
+	Shipment ShipmentRepositoryInterface	
 }
 
 type repository struct {
@@ -26,6 +27,7 @@ func Init(opts Options) *Main {
 	m := &Main{
 		User:     (*userRepository)(repo),
 		UserRole: (*userRolesRepository)(repo),
+		Shipment: (*shipmentRepository)(repo),
 	}
 
 	return m

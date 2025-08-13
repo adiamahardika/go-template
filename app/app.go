@@ -68,7 +68,7 @@ func (m *Main) Init() (err error) {
 
 	m.router = e
 
-	routes.ConfigureRouter(e, m.controller)
+	routes.ConfigureRouter(e, m.controller, m.cfg)
 	return err
 }
 

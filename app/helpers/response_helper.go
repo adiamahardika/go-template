@@ -3,7 +3,7 @@ package helpers
 import (
 	"monitoring-service/app/models"
 
-	"github.com/labstack/echo/v4"
+    "github.com/labstack/echo/v4"
 )
 
 func ResponseWrapper(c echo.Context, statusCode int, response interface{}) error {

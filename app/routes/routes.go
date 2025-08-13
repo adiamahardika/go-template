@@ -15,7 +15,15 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main) {
 	public.POST("/register", controller.User.Register)
 
 	// User routes (protected)
+	authGroup := v1.Group("/auth")
+	authGroup.POST("/login", controller.Auth.Login)
+	authGroup.POST("/register", controller.Auth.Register)
+
+	// User routes
 	userGroup := v1.Group("/users")
 	userGroup.GET("", controller.User.GetAllUsers)
 	userGroup.GET("/:id", controller.User.GetUserByID)
+
+	productGroup := v1.Group("/product")
+	productGroup.GET("/:id", controller.Product.GetProductByID)
 }

@@ -15,6 +15,12 @@ type Config struct {
 	JWTSecret          string           `mapstructure:"jwt_secret"`
 	JWTExpireTime      int              `mapstructure:"jwt_expire_time"`
 	Database           DatabasePlatform `mapstructure:"database"`
+	JWT                JWTConfig        `mapstructure:"jwt" json:"jwt"`
+}
+
+type JWTConfig struct {
+	Secret     string `mapstructure:"jwt_secret" json:"jwt_secret"`
+	ExpireTime int    `mapstructure:"jwt_expire_time" json:"jwt_expire_time"`
 }
 
 func NewConfig() *Config {
@@ -26,6 +32,10 @@ func NewConfig() *Config {
 		JWTSecret:          viper.GetString("JWT_SECRET"),
 		JWTExpireTime:      viper.GetInt("JWT_EXPIRE_TIME"),
 		Database:           LoadDatabaseConfig(),
+		JWT: JWTConfig{
+			Secret:     viper.GetString("JWT_SECRET"),
+			ExpireTime: viper.GetInt("JWT_EXPIRE_TIME"),
+		},
 	}
 }
 

@@ -32,7 +32,6 @@ func (d *Database) ToArgs(dbType database.DBType, connType database.ConnType, va
 		Host:            d.URL,
 		Port:            d.Port,
 		Database:        d.Name,
-		Schema:          d.Schema,
 		MaxIdleConns:    d.MaxIdleConns,
 		MaxOpenConns:    d.MaxOpenConns,
 		ConnMaxLifetime: d.MaxLifetime,

@@ -12,6 +12,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
+
+	_ "monitoring-service/docs"
 )
 
 type Main struct {

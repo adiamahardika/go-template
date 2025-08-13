@@ -19,8 +19,15 @@ type Config struct {
 }
 
 type JWTConfig struct {
-	Secret     string `mapstructure:"jwt_secret" json:"jwt_secret"`
-	ExpireTime int    `mapstructure:"jwt_expire_time" json:"jwt_expire_time"`
+	Secret             string           `mapstructure:"jwt_secret" json:"jwt_secret"`
+	ExpireTime         int              `mapstructure:"jwt_expire_time" json:"jwt_expire_time"`
+	ServiceHost        string           `mapstructure:"service_host" json:"service_host"`
+	ServiceEndpointV   string           `mapstructure:"service_endpoint_v" json:"service_endpoint_v"`
+	ServiceEnvironment string           `mapstructure:"service_environment" json:"service_environment"`
+	ServicePort        string           `mapstructure:"service_port" json:"service_port"`
+	Database           DatabasePlatform `mapstructure:"database" json:"database"`
+	JWTSecret          string
+	JWTExpireTime      int
 }
 
 func NewConfig() *Config {

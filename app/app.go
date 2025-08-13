@@ -31,7 +31,6 @@ type Database struct {
 func New() *Main {
 	return new(Main)
 }
-
 func (m *Main) Init() (err error) {
 	viper.SetConfigFile(".env")
 	err = viper.ReadInConfig()
@@ -50,8 +49,9 @@ func (m *Main) Init() (err error) {
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
-	m.database.Postgres, err = database.GetConnection(m.cfg.Postgres().Read.ToArgs(database.Postgres, database.ReadConn, nil))
-
+	m.database.Postgres, err = database.GetConnection(
+		m.cfg.Postgres().Read.ToArgs(database.Postgres, database.ReadConn, nil),
+	)
 	if err != nil {
 		return
 	}
@@ -71,7 +71,9 @@ func (m *Main) Init() (err error) {
 
 	m.router = e
 
-	routes.ConfigureRouter(e, m.controller)
+	// ✅ Tambahkan m.cfg di sini
+	routes.ConfigureRouter(e, m.controller, m.cfg)
+
 	return err
 }
 

@@ -3,6 +3,8 @@ package controllers
 import (
 	"errors"
 	"log"
+	"monitoring-service/app/helpers"
+	"monitoring-service/app/models"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,8 +13,6 @@ import (
 	"github.com/ezartsh/validet"
 	"github.com/labstack/echo/v4"
 
-	"monitoring-service/app/helpers"
-	"monitoring-service/app/models"
 	customerror "monitoring-service/pkg/customerror"
 )
 
@@ -22,6 +22,7 @@ type UserControllerInterface interface {
 	GetAllUsers(c echo.Context) error
 	GetUserByID(c echo.Context) error
 	Register(c echo.Context) error
+	Login(c echo.Context) error // Tambahkan method baru
 }
 
 func (ctrl *userController) GetAllUsers(c echo.Context) error {
@@ -179,4 +180,64 @@ func (ctrl *userController) Register(c echo.Context) error {
 	return helpers.StandardResponse(c, http.StatusCreated, []string{"User registered successfully"}, map[string]string{
 		"token": token,
 	}, nil)
+}
+
+func (ctrl *userController) Login(c echo.Context) error {
+	var request models.LoginRequest
+
+	// Bind request
+	if err := c.Bind(&request); err != nil {
+		return helpers.StandardResponse(c, http.StatusBadRequest, []string{err.Error()}, nil, nil)
+	}
+
+	// Konversi request ke map untuk validasi
+	requestMap := map[string]any{
+		"email":    request.Email,
+		"password": request.Password,
+	}
+
+	// Validasi
+	schema := validet.NewSchema(
+		requestMap, // Gunakan map bukan struct langsung
+		map[string]validet.Rule{
+			"email": validet.String{
+				Required: true,
+				Custom: func(v string, path validet.PathKey, lookup validet.Lookup) error {
+					// Tambahkan validasi email custom jika diperlukan
+					if !strings.Contains(v, "@") {
+						return errors.New("invalid email format")
+					}
+					return nil
+				},
+			},
+			"password": validet.String{
+				Required: true,
+				Custom: func(v string, path validet.PathKey, lookup validet.Lookup) error {
+					// Validasi panjang password minimal 6 karakter
+					if len(v) < 6 {
+						return errors.New("password must be at least 6 characters")
+					}
+					return nil
+				},
+			},
+		},
+		validet.Options{},
+	)
+
+	errorBags, err := schema.Validate()
+	if err != nil {
+		return helpers.StandardResponse(c, http.StatusBadRequest, errorBags.Errors, nil, nil)
+	}
+
+	// Panggil use case
+	response, err := ctrl.Options.UseCases.User.Login(request)
+	if err != nil {
+		statusCode := http.StatusInternalServerError
+		if err.Error() == "invalid email or password" {
+			statusCode = http.StatusUnauthorized
+		}
+		return helpers.StandardResponse(c, statusCode, []string{err.Error()}, nil, nil)
+	}
+
+	return helpers.StandardResponse(c, http.StatusOK, []string{"Login successful"}, response, nil)
 }

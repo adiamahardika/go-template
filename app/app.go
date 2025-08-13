@@ -42,6 +42,9 @@ func (m *Main) Init() (err error) {
 
 	e := echo.New()
 
+	// Rate limiting (5 request per second)
+	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(5)))
+
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())

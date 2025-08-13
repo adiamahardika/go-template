@@ -22,7 +22,13 @@ func GetStatusCode(err error) int {
 		return http.StatusNotFound
 	} else if _, ok := err.(BadRequestError); ok {
 		return http.StatusBadRequest
+	} else if _, ok := err.(ConflictError); ok {
+		return http.StatusConflict
 	}
 	return http.StatusInternalServerError
+}
 
+func IsConflictError(err error) bool {
+	_, ok := err.(ConflictError)
+	return ok
 }

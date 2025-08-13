@@ -8,11 +8,13 @@ import (
 )
 
 type Config struct {
-	ServiceHost        string           `mapstructure:"service_host" json:"service_host"`
-	ServiceEndpointV   string           `mapstructure:"service_endpoint_v" json:"service_endpoint_v"`
-	ServiceEnvironment string           `mapstructure:"service_environment" json:"service_environment"`
-	ServicePort        string           `mapstructure:"service_port" json:"service_port"`
-	Database           DatabasePlatform `mapstructure:"database" json:"database"`
+	ServiceHost        string           `mapstructure:"service_host"`
+	ServiceEndpointV   string           `mapstructure:"service_endpoint_v"`
+	ServiceEnvironment string           `mapstructure:"service_environment"`
+	ServicePort        string           `mapstructure:"service_port"`
+	JWTSecret          string           `mapstructure:"jwt_secret"`
+	JWTExpireTime      int              `mapstructure:"jwt_expire_time"`
+	Database           DatabasePlatform `mapstructure:"database"`
 }
 
 func NewConfig() *Config {
@@ -21,6 +23,8 @@ func NewConfig() *Config {
 		ServiceEndpointV:   viper.GetString("APP_ENDPOINT_V"),
 		ServiceEnvironment: viper.GetString("APP_ENVIRONMENT"),
 		ServicePort:        viper.GetString("APP_PORT"),
+		JWTSecret:          viper.GetString("JWT_SECRET"),
+		JWTExpireTime:      viper.GetInt("JWT_EXPIRE_TIME"),
 		Database:           LoadDatabaseConfig(),
 	}
 }

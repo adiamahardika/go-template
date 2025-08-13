@@ -6,8 +6,10 @@ import (
 )
 
 type Main struct {
-	User UserControllerInterface
-	Auth AuthControllerInterface
+	User     UserControllerInterface
+	Auth     AuthControllerInterface
+	Product *ProductController
+	Category *CategoryController
 }
 
 type controller struct {
@@ -22,10 +24,21 @@ type Options struct {
 func Init(opts Options) *Main {
 	ctrl := &controller{opts}
 
-	m := &Main{
-		User: (*userController)(ctrl),
-		Auth: (*authController)(ctrl),
-	}
-
-	return m
+       // Wiring ProductController
+       var productController *ProductController
+       if opts.UseCases != nil && opts.UseCases.Product != nil {
+	       productController = NewProductController(opts.UseCases.Product)
+       }
+       // Wiring CategoryController
+       var categoryController *CategoryController
+       if opts.UseCases != nil && opts.UseCases.Category != nil {
+	       categoryController = NewCategoryController(opts.UseCases.Category)
+       }
+       m := &Main{
+	       User:     (*userController)(ctrl),
+	       Auth:     (*authController)(ctrl),
+	       Product:  productController,
+	       Category: categoryController,
+       }
+       return m
 }

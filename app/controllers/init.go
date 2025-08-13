@@ -6,7 +6,9 @@ import (
 )
 
 type Main struct {
-	User UserControllerInterface
+	User    UserControllerInterface
+	Auth    AuthControllerInterface
+	Product productControllerInterface
 }
 
 type controller struct {
@@ -22,7 +24,9 @@ func Init(opts Options) *Main {
 	ctrl := &controller{opts}
 
 	m := &Main{
-		User: (*userController)(ctrl),
+		User:    (*userController)(ctrl),
+		Auth:    (*authController)(ctrl),
+		Product: (*productController)(ctrl),
 	}
 
 	return m

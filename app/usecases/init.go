@@ -6,6 +6,7 @@ import (
 )
 
 type Main struct {
+	User UserUsecaseInterface
 }
 
 type usecase struct {
@@ -18,9 +19,11 @@ type Options struct {
 }
 
 func Init(opts Options) *Main {
-	// ucs := &usecase{opts}
+	ucs := &usecase{opts}
 
-	m := &Main{}
+	m := &Main{
+		User: (*userUsecase)(ucs),
+	}
 
 	return m
 }

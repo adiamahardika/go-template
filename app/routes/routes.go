@@ -18,4 +18,7 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main) {
 	userGroup := v1.Group("/users")
 	userGroup.GET("", controller.User.GetAllUsers)
 	userGroup.GET("/:id", controller.User.GetUserByID)
+
+	productGroup := v1.Group("/product")
+	productGroup.GET("/:id", controller.Product.GetProductByID)
 }

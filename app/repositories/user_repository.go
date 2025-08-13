@@ -9,6 +9,7 @@ type userRepository repository
 type UserRepositoryInterface interface {
 	GetAllUsers(limit, offset int) ([]models.User, int64, error)
 	GetUserByID(id int) (*models.User, error)
+	GetUserByEmail(email string) (*models.User, error) // Tambahkan method baru
 }
 
 func (r *userRepository) GetAllUsers(limit, offset int) ([]models.User, int64, error) {
@@ -47,3 +48,19 @@ func (r *userRepository) GetUserByID(id int) (*models.User, error) {
 
 	return &user, nil
 }
+
+// Tambahkan implementasi baru
+func (r *userRepository) GetUserByEmail(email string) (*models.User, error) {
+	var user models.User
+
+	if err := r.Options.Postgres.
+		Preload("UserRoles").
+		Preload("UserRoles.Role").
+		Where("email = ?", email).
+		First(&user).Error; err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+

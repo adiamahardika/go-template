@@ -13,8 +13,6 @@ type Config struct {
 	ServiceEnvironment string           `mapstructure:"service_environment" json:"service_environment"`
 	ServicePort        string           `mapstructure:"service_port" json:"service_port"`
 	Database           DatabasePlatform `mapstructure:"database" json:"database"`
-	JWTSecret     string
-	JWTExpireTime int
 }
 
 func NewConfig() *Config {

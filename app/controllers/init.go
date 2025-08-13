@@ -6,7 +6,6 @@ import (
 )
 
 type Main struct {
-	User UserControllerInterface
 }
 
 type controller struct {
@@ -19,11 +18,9 @@ type Options struct {
 }
 
 func Init(opts Options) *Main {
-	ctrl := &controller{opts}
+	// ctrl := &controller{opts}
 
-	m := &Main{
-		User: (*userController)(ctrl),
-	}
+	m := &Main{}
 
 	return m
 }

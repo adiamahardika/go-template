@@ -22,20 +22,22 @@ type Product struct {
 	OrderItems []OrderItem `json:"order_items,omitempty" gorm:"foreignKey:ProductID"`
 }
 
+// DTO
 type ProductResponse struct {
-	ID          int               `json:"id"`
-	Name        string            `json:"name"`
-	Description *string           `json:"description,omitempty"`
-	Price       float64           `json:"price"`
-	Stock       int               `json:"stock"`
-	ImageURL    *string           `json:"image_url,omitempty"`
-	CreatedAt   time.Time         `json:"created_at"`
-	UpdatedAt   time.Time         `json:"updated_at"`
-	Category    *CategoryResponse `json:"category,omitempty"`
-	Available   string            `json:"available"`
-	Related     []ProductRelated  `json:"related_product"`
+	ID           int               `json:"id"`
+	Name         string            `json:"name"`
+	Description  *string           `json:"description,omitempty"`
+	Price        float64           `json:"price"`
+	Stock        int               `json:"stock"`
+	ImageURL     *string           `json:"image_url,omitempty"`
+	CreatedAt    time.Time         `json:"created_at"`
+	UpdatedAt    time.Time         `json:"updated_at"`
+	Category     *CategoryResponse `json:"category,omitempty"`
+	Availability string            `json:"availability "`
+	Related      []ProductRelated  `json:"related_product"`
 }
 
+// DTO
 type ProductRelated struct {
 	ID       int     `json:"id" gorm:"primaryKey;autoIncrement"`
 	Name     string  `json:"name" gorm:"not null"`
@@ -43,6 +45,7 @@ type ProductRelated struct {
 	ImageURL *string `json:"image_url,omitempty"`
 }
 
+// DTO
 func (p *Product) ToProductResponse(r []ProductRelated) ProductResponse {
 	return ProductResponse{
 		ID:          p.ID,

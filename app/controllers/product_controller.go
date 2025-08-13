@@ -69,10 +69,10 @@ func (ctrl *productController) GetProductByID(c echo.Context) error {
 	}
 
 	if product.Stock <= 0 {
-		product.Available = "out_of_stock"
+		product.Availability = "out_of_stock"
 	}
 	if product.Stock > 0 {
-		product.Available = "in_stock"
+		product.Availability = "in_stock"
 	}
 
 	return helpers.StandardResponse(c, http.StatusOK, []string{"Product retrieved successfully"}, product, nil)

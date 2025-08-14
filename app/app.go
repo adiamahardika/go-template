@@ -31,7 +31,6 @@ type Database struct {
 func New() *Main {
 	return new(Main)
 }
-
 func (m *Main) Init() (err error) {
 	viper.SetConfigFile(".env")
 	err = viper.ReadInConfig()

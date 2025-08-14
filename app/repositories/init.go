@@ -6,10 +6,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type Main struct {
-	User UserRepositoryInterface
-}
-
 type repository struct {
 	Options Options
 }
@@ -19,12 +15,18 @@ type Options struct {
 	Config   *config.Config
 }
 
-func Init(opts Options) *Main {
-	repo := &repository{opts}
+type Main struct {
+	User            UserRepositoryInterface
+	ShippingPayment ShippingPaymentRepositoryInterface
+}
 
-	m := &Main{
-		User: (*userRepository)(repo),
+func Init(options *Options) *Main {
+	repo := &repository{
+		Options: *options,
 	}
 
-	return m
+	return &Main{
+		User:            NewUserRepository(repo),
+		ShippingPayment: NewShippingPaymentRepository(repo),
+	}
 }

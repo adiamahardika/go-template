@@ -42,44 +42,42 @@ func (m *Main) Init() (err error) {
 
 	e := echo.New()
 
-	// Rate limiting (5 request per second)
-	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(5)))
-
 	// Middleware
+	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(5)))
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
+	// Database connection
 	m.database.Postgres, err = database.GetConnection(m.cfg.Postgres().Read.ToArgs(database.Postgres, database.ReadConn, nil))
-
 	if err != nil {
 		return
 	}
 
-	m.repo = repositories.Init(repositories.Options{
+	// Initialize layers
+	m.repo = repositories.Init(&repositories.Options{
 		Config:   m.cfg,
 		Postgres: m.database.Postgres,
 	})
-	m.usecase = usecases.Init(usecases.Options{
+
+	m.usecase = usecases.Init(&usecases.Options{
 		Config:     m.cfg,
 		Repository: m.repo,
 	})
-	m.controller = controllers.Init(controllers.Options{
+
+	m.controller = controllers.Init(&controllers.Options{
 		Config:   m.cfg,
 		UseCases: m.usecase,
 	})
 
 	m.router = e
-
 	routes.ConfigureRouter(e, m.controller)
 	return err
 }
 
 func (m *Main) Run() (err error) {
 	defer m.close()
-
-	m.router.Start(":" + m.cfg.ServicePort)
-	return
+	return m.router.Start(":" + m.cfg.ServicePort)
 }
 
 func (m *Main) close() {

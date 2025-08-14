@@ -6,7 +6,8 @@ import (
 )
 
 type Main struct {
-	User UserControllerInterface
+	User            UserControllerInterface
+	ShippingPayment ShippingPaymentControllerInterface
 }
 
 type controller struct {
@@ -18,11 +19,12 @@ type Options struct {
 	UseCases *usecases.Main
 }
 
-func Init(opts Options) *Main {
-	ctrl := &controller{opts}
+func Init(opts *Options) *Main {
+	ctrl := &controller{*opts}
 
 	m := &Main{
-		User: (*userController)(ctrl),
+		User:            (*userController)(ctrl),
+		ShippingPayment: newShippingPaymentController(ctrl),
 	}
 
 	return m

@@ -2,33 +2,29 @@ package repositories
 
 import (
 	"errors"
-
 	"monitoring-service/app/models"
 
 	"gorm.io/gorm"
 )
 
-type userRepository repository
+type userRepository struct {
+	*repository
+}
 
-type UserRepositoryInterface interface {
-	GetAllUsers(limit, offset int) ([]models.User, int64, error)
-	GetUserByID(id int) (*models.User, error)
-	EmailExists(email string) (bool, error)
-	CreateUser(user models.User) (*models.User, error)
-	GetRoleByName(name string) (*models.Role, error)
-	AssignRole(userRole models.UserRole) error
+func NewUserRepository(repo *repository) UserRepositoryInterface {
+	return &userRepository{
+		repository: repo,
+	}
 }
 
 func (r *userRepository) GetAllUsers(limit, offset int) ([]models.User, int64, error) {
 	var users []models.User
 	var total int64
 
-	// Hitung total user
 	if err := r.Options.Postgres.Model(&models.User{}).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Ambil data user beserta relasi
 	if err := r.Options.Postgres.
 		Preload("UserRoles").
 		Preload("UserRoles.Role").
@@ -46,8 +42,6 @@ func (r *userRepository) GetUserByID(id int) (*models.User, error) {
 	if err := r.Options.Postgres.
 		Preload("UserRoles").
 		Preload("UserRoles.Role").
-		Preload("Carts").
-		Preload("Orders").
 		First(&user, id).Error; err != nil {
 		return nil, err
 	}

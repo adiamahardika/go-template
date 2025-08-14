@@ -6,11 +6,12 @@ import (
 )
 
 type Main struct {
-	User UserUsecaseInterface
+	User            UserUsecaseInterface
+	ShippingPayment ShippingPaymentUsecaseInterface
 }
 
 type usecase struct {
-	Options Options
+	options *Options
 }
 
 type Options struct {
@@ -18,12 +19,22 @@ type Options struct {
 	Config     *config.Config
 }
 
-func Init(opts Options) *Main {
-	ucs := &usecase{opts}
-
-	m := &Main{
-		User: (*userUsecase)(ucs),
+func Init(opts *Options) *Main {
+	uc := &usecase{
+		options: opts,
 	}
 
-	return m
+	return &Main{
+		User:            newUserUsecase(uc),
+		ShippingPayment: newShippingPaymentUsecase(uc),
+	}
+}
+
+// unexported constructor functions
+func newUserUsecase(uc *usecase) UserUsecaseInterface {
+	return &userUsecase{uc}
+}
+
+func newShippingPaymentUsecase(uc *usecase) ShippingPaymentUsecaseInterface {
+	return &shippingPaymentUsecase{uc}
 }

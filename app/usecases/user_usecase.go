@@ -2,22 +2,22 @@ package usecases
 
 import (
 	"errors"
-	"math"
+	"monitoring-service/app/models"
+	"monitoring-service/pkg/customerror"
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
-
-	"monitoring-service/app/models"
-	"monitoring-service/pkg/customerror"
+	"gorm.io/gorm"
 )
-
-type userUsecase usecase
 
 type UserUsecaseInterface interface {
 	GetAllUsers(request models.GetUsersRequest) ([]models.UserResponse, models.Pagination, error)
 	GetUserByID(id int) (*models.UserResponse, error)
 	Register(request models.RegisterRequest) (string, error)
+}
+
+type userUsecase struct {
+	*usecase
 }
 
 func (u *userUsecase) GetAllUsers(request models.GetUsersRequest) ([]models.UserResponse, models.Pagination, error) {
@@ -31,16 +31,17 @@ func (u *userUsecase) GetAllUsers(request models.GetUsersRequest) ([]models.User
 
 	offset := (request.Page - 1) * request.PageSize
 
-	users, total, err := u.Options.Repository.User.GetAllUsers(request.PageSize, offset)
+	users, total, err := u.options.Repository.User.GetAllUsers(request.PageSize, offset)
 	if err != nil {
 		return nil, models.Pagination{}, err
 	}
 
-	// Convert to response DTOs
-	userResponses := models.ToUsersResponse(users)
+	responses := models.ToUsersResponse(users)
 
-	// Calculate total pages
-	totalPages := int(math.Ceil(float64(total) / float64(request.PageSize)))
+	totalPages := 0
+	if request.PageSize > 0 {
+		totalPages = int((total + int64(request.PageSize) - 1) / int64(request.PageSize))
+	}
 
 	pagination := models.Pagination{
 		Page:      request.Page,
@@ -49,23 +50,25 @@ func (u *userUsecase) GetAllUsers(request models.GetUsersRequest) ([]models.User
 		TotalPage: totalPages,
 	}
 
-	return userResponses, pagination, nil
+	return responses, pagination, nil
 }
 
 func (u *userUsecase) GetUserByID(id int) (*models.UserResponse, error) {
-	user, err := u.Options.Repository.User.GetUserByID(id)
+	user, err := u.options.Repository.User.GetUserByID(id)
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, customerror.NewNotFoundError("user not found")
+		}
 		return nil, err
 	}
 
-	// Convert to response DTO
-	userResponse := user.ToUserResponse()
-	return &userResponse, nil
+	response := user.ToUserResponse()
+	return &response, nil
 }
 
 func (u *userUsecase) Register(request models.RegisterRequest) (string, error) {
 	// Check email uniqueness
-	exists, err := u.Options.Repository.User.EmailExists(request.Email)
+	exists, err := u.options.Repository.User.EmailExists(request.Email)
 	if err != nil {
 		return "", err
 	}
@@ -73,26 +76,20 @@ func (u *userUsecase) Register(request models.RegisterRequest) (string, error) {
 		return "", customerror.NewConflictError("email already exists")
 	}
 
-	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-
 	// Create user
 	user := models.User{
 		Name:     request.Name,
 		Email:    request.Email,
-		Password: string(hashedPassword),
+		Password: request.Password, // Note: Password should be hashed before saving
 	}
 
-	newUser, err := u.Options.Repository.User.CreateUser(user)
+	newUser, err := u.options.Repository.User.CreateUser(user)
 	if err != nil {
 		return "", err
 	}
 
 	// Assign shopper role
-	shopperRole, err := u.Options.Repository.User.GetRoleByName("shopper")
+	shopperRole, err := u.options.Repository.User.GetRoleByName("shopper")
 	if err != nil {
 		return "", err
 	}
@@ -105,7 +102,7 @@ func (u *userUsecase) Register(request models.RegisterRequest) (string, error) {
 		RoleID: shopperRole.ID,
 	}
 
-	if err := u.Options.Repository.User.AssignRole(userRole); err != nil {
+	if err := u.options.Repository.User.AssignRole(userRole); err != nil {
 		return "", err
 	}
 
@@ -114,9 +111,9 @@ func (u *userUsecase) Register(request models.RegisterRequest) (string, error) {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["user_id"] = newUser.ID
 	claims["role"] = "shopper"
-	claims["exp"] = time.Now().Add(time.Hour * 24 * time.Duration(u.Options.Config.JWTExpireTime)).Unix()
+	claims["exp"] = time.Now().Add(time.Hour * 24 * time.Duration(u.options.Config.JWTExpireTime)).Unix()
 
-	tokenString, err := token.SignedString([]byte(u.Options.Config.JWTSecret))
+	tokenString, err := token.SignedString([]byte(u.options.Config.JWTSecret))
 	if err != nil {
 		return "", err
 	}

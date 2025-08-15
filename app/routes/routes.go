@@ -37,5 +37,7 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main, cfg *config.Con
 	adminGroup := v1.Group("/admin")
 	adminGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 	adminGroup.Use(middleware.RoleMiddleware("admin"))
-	// Tambahkan route admin di sini nanti
+	v1.GET("/shipping-methods", controller.ShippingMethod.GetAll)
+	v1.GET("/shipping-methods/:id", controller.ShippingMethod.GetByID)
+	v1.GET("/cart/quote", controller.ShippingMethod.GetCartQuote, middleware.AuthMiddleware(cfg.JWTSecret))
 }

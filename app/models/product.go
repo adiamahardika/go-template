@@ -22,6 +22,24 @@ type Product struct {
 	OrderItems []OrderItem `json:"order_items,omitempty" gorm:"foreignKey:ProductID"`
 }
 
+type ProductAdmin struct {
+	ID             int        `json:"id" gorm:"primaryKey;autoIncrement"`
+	Name           string     `json:"name" gorm:"not null"`
+	Description    *string    `json:"description,omitempty"`
+	Price          float64    `json:"price" gorm:"type:decimal(12,2);not null"`
+	Stock          int        `json:"stock" gorm:"default:0"`
+	CategoryID     *int       `json:"category_id,omitempty"`
+	ImageURL       *string    `json:"image_url,omitempty"`
+	CreatedAt      time.Time  `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt      time.Time  `json:"updated_at" gorm:"autoUpdateTime"`
+	DeletedAt      *time.Time `json:"deleted_at,omitempty" gorm:"index"`
+	IncludeDeleted bool       `json:"included_deleted,omitempty" gorm:"index"`
+	// Relationships
+	Category   *Category   `json:"category,omitempty" gorm:"foreignKey:CategoryID;references:ID"`
+	CartItems  []CartItem  `json:"cart_items,omitempty" gorm:"foreignKey:ProductID"`
+	OrderItems []OrderItem `json:"order_items,omitempty" gorm:"foreignKey:ProductID"`
+}
+
 // DTO
 type ProductResponse struct {
 	ID           int               `json:"id"`
@@ -45,6 +63,22 @@ type ProductRelated struct {
 	ImageURL *string `json:"image_url,omitempty"`
 }
 
+type ProductCategory struct {
+	ID          int        `json:"id"`
+	Name        string     `json:"name`
+	Description *string    `json:"description,omitempty"`
+	Price       float64    `json:"price" `
+	Stock       int        `json:"stock"`
+	CategoryID  *int       `json:"category_id,omitempty"`
+	ImageURL    *string    `json:"image_url,omitempty"`
+	CreatedAt   time.Time  `json:"created_at" `
+	UpdatedAt   time.Time  `json:"updated_at"`
+	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
+
+	// Relationships
+	CategoryInfo CategoryResponse `json:"category_info,omitempty" gorm:"foreignKey:CategoryID;references:ID"`
+}
+
 // DTO
 func (p *Product) ToProductResponse(r []ProductRelated) ProductResponse {
 	return ProductResponse{
@@ -61,6 +95,23 @@ func (p *Product) ToProductResponse(r []ProductRelated) ProductResponse {
 			Name: p.Category.Name,
 		},
 		Related: r,
+	}
+}
+
+func ToProductCategory(p Product) ProductCategory {
+	return ProductCategory{
+		ID:          p.ID,
+		Name:        p.Name,
+		Description: p.Description,
+		Price:       p.Price,
+		Stock:       p.Stock,
+		ImageURL:    p.ImageURL,
+		CreatedAt:   p.CreatedAt,
+		UpdatedAt:   p.UpdatedAt,
+		CategoryInfo: CategoryResponse{
+			ID:   p.Category.ID,
+			Name: p.Category.Name,
+		},
 	}
 }
 

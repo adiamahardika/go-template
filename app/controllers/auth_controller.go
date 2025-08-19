@@ -5,6 +5,8 @@ import (
 	"monitoring-service/app/models"
 	"net/http"
 
+	"strings"
+
 	"github.com/ezartsh/inrequest"
 	"github.com/ezartsh/validet"
 	"github.com/labstack/echo/v4"
@@ -15,6 +17,7 @@ type authController controller
 type AuthControllerInterface interface {
 	Login(c echo.Context) error
 	Register(c echo.Context) error
+	IsAdminJWT(next echo.HandlerFunc) echo.HandlerFunc
 }
 
 func (ctrl *authController) Login(c echo.Context) error {
@@ -107,4 +110,26 @@ func (ctrl *authController) Register(c echo.Context) error {
 	}
 
 	return helpers.StandardResponse(c, http.StatusCreated, []string{"Registration successful"}, resBody, nil)
+}
+
+func (ctrl *authController) IsAdminJWT(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		tokenStr := c.Request().Header.Get("Authorization")
+		if tokenStr == "" {
+			return helpers.StandardResponse(c, http.StatusUnauthorized, []string{"Missing Authorization header"}, nil, nil)
+		}
+
+		tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
+		if tokenStr == "" {
+			return helpers.StandardResponse(c, http.StatusUnauthorized, []string{"Invalid Authorization header format"}, nil, nil)
+		}
+
+		err := ctrl.Options.UseCases.Auth.IsAdminJWT(tokenStr)
+		if err != nil {
+			return helpers.StandardResponse(c, http.StatusForbidden, []string{err.Error()}, nil, nil)
+		}
+
+		// ✅ Pass to next handler if check passes
+		return next(c)
+	}
 }

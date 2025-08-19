@@ -14,7 +14,7 @@ type UserRepositoryInterface interface {
 	GetAllUsers(limit, offset int) ([]models.User, int64, error)
 	GetUserByID(id int) (*models.User, error)
 	EmailExists(email string) (bool, error)
-	CreateUser(user models.User) (*models.User, error)
+	CreateUser(user *models.User) (*models.User, error)
 	GetRoleByName(name string) (*models.Role, error)
 	AssignRole(userRole models.UserRole) error
 	GetUserByEmail(email string) (*models.User, error)
@@ -65,9 +65,9 @@ func (r *userRepository) EmailExists(email string) (bool, error) {
 	return count > 0, err
 }
 
-func (r *userRepository) CreateUser(user models.User) (*models.User, error) {
-	err := r.Options.Postgres.Create(&user).Error
-	return &user, err
+func (r *userRepository) CreateUser(user *models.User) (*models.User, error) {
+	err := r.Options.Postgres.Create(user).Error
+	return user, err
 }
 
 func (r *userRepository) GetRoleByName(name string) (*models.Role, error) {

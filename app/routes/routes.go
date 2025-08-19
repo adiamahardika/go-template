@@ -24,6 +24,26 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main) {
 	userGroup.GET("", controller.User.GetAllUsers)
 	userGroup.GET("/:id", controller.User.GetUserByID)
 
+	// Product routes
 	productGroup := v1.Group("/product")
 	productGroup.GET("/:id", controller.Product.GetProductByID)
+
+	// Admin routes for product management
+	adminProductGroup := productGroup.Group("", controller.Auth.IsAdminJWT)
+	adminProductGroup.POST("", controller.Product.CreateProduct)
+	adminProductGroup.GET("", controller.Product.GetAllProduct)
+	adminProductGroup.PUT("/:id", controller.Product.UpdateProduct)
+	adminProductGroup.DELETE("/:id", controller.Product.SoftDeleteProduct)
+
+	// Category routes
+	categoryGroup := v1.Group("/categories")
+	categoryGroup.GET("/:id", controller.Category.GetCategoryByID)
+
+	// Admin routes for category management
+	adminCategoryGroup := categoryGroup.Group("", controller.Auth.IsAdminJWT)
+	adminCategoryGroup.GET("", controller.Category.GetAllCategory)
+	adminCategoryGroup.POST("", controller.Category.CreateCategory)
+	adminCategoryGroup.PUT("/:id", controller.Category.UpdateCategory)
+	adminCategoryGroup.DELETE("/:id", controller.Category.SoftDeleteCategory)
+
 }

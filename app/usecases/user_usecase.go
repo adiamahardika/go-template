@@ -86,7 +86,7 @@ func (u *userUsecase) Register(request models.RegisterRequest) (string, error) {
 		Password: string(hashedPassword),
 	}
 
-	newUser, err := u.Options.Repository.User.CreateUser(user)
+	newUser, err := u.Options.Repository.User.CreateUser(&user)
 	if err != nil {
 		return "", err
 	}

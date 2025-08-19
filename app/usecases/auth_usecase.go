@@ -18,6 +18,7 @@ type authUsecase usecase
 type AuthUsecaseInterface interface {
 	Login(ctx context.Context, req models.LoginRequest) (*models.AuthResponse, error)
 	Register(ctx context.Context, req models.RegisterRequest) (*models.AuthResponse, error)
+	IsAdminJWT(tokenStr string) error
 }
 
 func (u *authUsecase) Login(ctx context.Context, req models.LoginRequest) (*models.AuthResponse, error) {
@@ -121,13 +122,14 @@ func (u *authUsecase) Register(ctx context.Context, req models.RegisterRequest) 
 	}
 
 	// Create user
-	user := &models.User{
+	user := models.User{
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: string(hashedPassword),
 	}
 
-	if err := u.Options.Repository.User.CreateUser(user); err != nil {
+	newUser, err := u.Options.Repository.User.CreateUser(&user)
+	if err != nil {
 		return nil, errors.New("failed to create user")
 	}
 
@@ -144,7 +146,7 @@ func (u *authUsecase) Register(ctx context.Context, req models.RegisterRequest) 
 
 	// Generate token for immediate login
 	roles := []string{"shopper"}
-	token, err := u.GenerateToken(*user, roles)
+	token, err := u.GenerateToken(*newUser, roles)
 	if err != nil {
 		return nil, errors.New("failed to generate access token")
 	}
@@ -210,4 +212,37 @@ func (u *authUsecase) validatePassword(password string) error {
 	}
 
 	return nil
+}
+
+func (u *authUsecase) IsAdminJWT(tokenStr string) error {
+	if tokenStr == "" {
+		return errors.New("missing token")
+	}
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return []byte(u.Options.Config.JWT.Secret), nil
+	})
+	if err != nil {
+		return errors.New("invalid token")
+	}
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		roles, ok := claims["roles"].([]interface{})
+		if !ok {
+			return errors.New("roles not found in token")
+		}
+		isAdmin := false
+		for _, r := range roles {
+			if r == "admin" {
+				isAdmin = true
+				break
+			}
+		}
+		if !isAdmin {
+			return errors.New("admin access required")
+		}
+		return nil
+	}
+	return errors.New("invalid token claims")
 }

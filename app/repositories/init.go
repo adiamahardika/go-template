@@ -9,7 +9,7 @@ import (
 type Main struct {
 	User     UserRepositoryInterface
 	UserRole UserRolesRepositoryInterface
-	Cart     CartRepositoryInterface // Tambahkan Cart di sini
+	Cart     CartRepositoryInterface // Tambahkan Cart di sinizzz
 }
 
 type repository struct {

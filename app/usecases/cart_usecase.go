@@ -5,43 +5,27 @@ import (
 	"errors"
 	"monitoring-service/app/models"
 	"monitoring-service/app/models/dto"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type CartUsecaseInterface interface {
-    GetCart(ctx context.Context, userID int) (models.Cart, []models.CartItem, error)
-    GetCartItemsByUserID(ctx context.Context, userID int) ([]models.CartItem, error)
-    AddCartItem(ctx context.Context, userID, productID, addQty int) (*models.CartItem, string, error)
-    RemoveCartItem(ctx context.Context, userID, productID int) error
-		UpdateCartItemQuantity(ctx context.Context, userID, cartItemID, newQty int) (*models.CartItem, error)
-		ViewCart(ctx context.Context, userID int) (*dto.CartViewResponse, error)
+	GetCart(ctx context.Context, userID int) (models.Cart, []models.CartItem, error)
+	GetCartItemsByUserID(ctx context.Context, userID int) ([]models.CartItem, error)
+	AddCartItem(ctx context.Context, userID, productID, addQty int) (*models.CartItem, string, error)
+	RemoveCartItem(ctx context.Context, userID, productID int) error
+	UpdateCartItemQuantity(ctx context.Context, userID, cartItemID, newQty int) (*models.CartItem, error)
+	ViewCart(ctx context.Context, userID int) (*dto.CartViewResponse, error)
+
+	// New methods for coupon functionality
+	ApplyCoupon(ctx context.Context, userID int, couponCode string) error
+	RemoveCoupon(ctx context.Context, userID int) error
+	CalculateCartTotal(ctx context.Context, userID int) (*dto.CartSummaryResponse, error)
 }
 
 type cartUsecase struct {
-    *usecase
-}
-
-func (u *cartUsecase) GetCart(ctx context.Context, userID int) (models.Cart, []models.CartItem, error) {
-    cart, err := u.Options.Repository.Cart.GetCartByUserID(userID)
-    if err != nil {
-        return models.Cart{}, nil, err
-    }
-
-    items, err := u.Options.Repository.Cart.GetCartItemsByCartID(cart.ID)
-    if err != nil {
-        return cart, nil, err
-    }
-
-    return cart, items, nil
-}
-
-func (u *cartUsecase) GetCartItemsByUserID(ctx context.Context, userID int) ([]models.CartItem, error) {
-    cart, err := u.Options.Repository.Cart.GetCartByUserID(userID)
-    if err != nil {
-        return nil, err
-    }
-    return u.Options.Repository.Cart.GetCartItemsByCartID(cart.ID)
+	*usecase
 }
 
 func (u *cartUsecase) AddCartItem(ctx context.Context, userID, productID, addQty int) (*models.CartItem, string, error) {
@@ -126,11 +110,171 @@ func (u *cartUsecase) AddCartItem(ctx context.Context, userID, productID, addQty
 	return item, message, nil
 }
 
+// New methods for coupon functionality
+func (u *cartUsecase) ApplyCoupon(ctx context.Context, userID int, couponCode string) error {
+	// Get user's cart
+	cart, err := u.Options.Repository.Cart.GetCartByUserID(userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Create cart if not exists
+			cart, err = u.Options.Repository.Cart.CreateCart(userID)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	// Get coupon by code
+	coupon, err := u.Options.Repository.Cart.GetCouponByCode(couponCode)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("coupon not found")
+		}
+		return err
+	}
+
+	// Validate coupon
+	valid, err := u.Options.Repository.Cart.ValidateCoupon(coupon.ID)
+	if err != nil {
+		return err
+	}
+	if !valid {
+		return errors.New("coupon is not valid or expired")
+	}
+
+	// Apply coupon to cart
+	return u.Options.Repository.Cart.ApplyCoupon(cart.ID, &coupon.ID)
+}
+
+func (u *cartUsecase) RemoveCoupon(ctx context.Context, userID int) error {
+	cart, err := u.Options.Repository.Cart.GetCartByUserID(userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("cart not found")
+		}
+		return err
+	}
+
+	return u.Options.Repository.Cart.RemoveCoupon(cart.ID)
+}
+
+func (u *cartUsecase) CalculateCartTotal(ctx context.Context, userID int) (*dto.CartSummaryResponse, error) {
+	cart, err := u.Options.Repository.Cart.GetCartWithCoupon(userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Return empty cart if not found
+			return &dto.CartSummaryResponse{
+				ID:        0,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				Subtotal:  0,
+				Discount:  0,
+				Total:     0,
+				Items:     []dto.CartItemView{},
+			}, nil
+		}
+		return nil, err
+	}
+
+	// Calculate subtotal
+	var subtotal float64 = 0
+	items := make([]dto.CartItemView, 0)
+
+	for _, item := range cart.Items {
+		if item.Product != nil {
+			itemSubtotal := float64(item.Quantity) * item.Product.Price
+			subtotal += itemSubtotal
+
+			items = append(items, dto.CartItemView{
+				ProductID: item.Product.ID,
+				Name:      item.Product.Name,
+				Price:     item.Product.Price,
+				Quantity:  item.Quantity,
+				Subtotal:  itemSubtotal,
+			})
+		}
+	}
+
+	// Calculate discount
+	var discount float64 = 0
+	var couponCode *string = nil
+
+	if cart.Coupon != nil && cart.Coupon.DiscountPercent != nil {
+		discountValue := subtotal * (*cart.Coupon.DiscountPercent / 100)
+
+		// Apply max discount if specified
+		if cart.Coupon.MaxDiscount != nil && discountValue > *cart.Coupon.MaxDiscount {
+			discount = *cart.Coupon.MaxDiscount
+		} else {
+			discount = discountValue
+		}
+
+		couponCode = &cart.Coupon.Code
+	}
+
+	total := subtotal - discount
+
+	return &dto.CartSummaryResponse{
+		ID:         cart.ID,
+		CreatedAt:  cart.CreatedAt,
+		UpdatedAt:  cart.UpdatedAt,
+		CouponCode: couponCode,
+		Items:      items,
+		Subtotal:   subtotal,
+		Discount:   discount,
+		Total:      total,
+	}, nil
+}
+
+// Update ViewCart to include coupon calculation
+func (u *cartUsecase) ViewCart(ctx context.Context, userID int) (*dto.CartViewResponse, error) {
+	cartSummary, err := u.CalculateCartTotal(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.CartViewResponse{
+		ID:         cartSummary.ID,
+		CreatedAt:  cartSummary.CreatedAt,
+		UpdatedAt:  cartSummary.UpdatedAt,
+		CouponCode: cartSummary.CouponCode,
+		Discount:   cartSummary.Discount,
+		Items:      cartSummary.Items,
+		Subtotal:   cartSummary.Subtotal,
+		Total:      cartSummary.Total,
+	}, nil
+}
+
+// Existing methods remain unchanged...
+func (u *cartUsecase) GetCart(ctx context.Context, userID int) (models.Cart, []models.CartItem, error) {
+	cart, err := u.Options.Repository.Cart.GetCartByUserID(userID)
+	if err != nil {
+		return models.Cart{}, nil, err
+	}
+
+	items, err := u.Options.Repository.Cart.GetCartItemsByCartID(cart.ID)
+	if err != nil {
+		return cart, nil, err
+	}
+
+	return cart, items, nil
+}
+
+func (u *cartUsecase) GetCartItemsByUserID(ctx context.Context, userID int) ([]models.CartItem, error) {
+	cart, err := u.Options.Repository.Cart.GetCartByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return u.Options.Repository.Cart.GetCartItemsByCartID(cart.ID)
+}
+
 func (u *cartUsecase) RemoveCartItem(ctx context.Context, userID, productID int) error {
 	// Temukan cart milik user
 	cart, err := u.Options.Repository.Cart.GetCartByUserID(userID)
 	if err != nil {
-		// jika not found, anggap sudah “terhapus” (idempotent)
+		// jika not found, anggap sudah "terhapus" (idempotent)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil
 		}
@@ -202,64 +346,4 @@ func (u *cartUsecase) UpdateCartItemQuantity(ctx context.Context, userID, cartIt
 		return nil, err
 	}
 	return item, nil
-}
-
-func (u *cartUsecase) ViewCart(ctx context.Context, userID int) (*dto.CartViewResponse, error) {
-	cart, err := u.Options.Repository.Cart.GetCartByUserID(userID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) || cart.ID == 0 {
-			// belum punya cart
-			return &dto.CartViewResponse{ID: 0, Items: []dto.CartItemView{}, Total: 0}, nil
-		}
-		return nil, err
-	}
-
-	// ambil items + preload product di repo
-	items, err := u.Options.Repository.Cart.GetCartItemsByCartID(cart.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	view := &dto.CartViewResponse{
-		ID:        cart.ID,
-		CreatedAt: cart.CreatedAt,
-		UpdatedAt: cart.UpdatedAt,
-		Items:     make([]dto.CartItemView, 0, len(items)),
-		Total:     0,
-	}
-
-	var total float64
-	for _, it := range items {
-		if it.Product == nil {
-			// amankan jika product tidak di-preload, fallback fetch
-			if it.ProductID != nil {
-				p, _ := u.Options.Repository.Cart.GetProductByID(*it.ProductID)
-				if p != nil {
-					it.Product = p
-				}
-			}
-		}
-		prodID := 0
-		name := ""
-		price := 0.0
-		if it.ProductID != nil {
-			prodID = *it.ProductID
-		}
-		if it.Product != nil {
-			name = it.Product.Name
-			price = it.Product.Price
-		}
-		subtotal := float64(it.Quantity) * price
-		total += subtotal
-
-		view.Items = append(view.Items, dto.CartItemView{
-			ProductID: prodID,
-			Name:      name,
-			Price:     price,
-			Quantity:  it.Quantity,
-			Subtotal:  subtotal,
-		})
-	}
-	view.Total = total
-	return view, nil
 }

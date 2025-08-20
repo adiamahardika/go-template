@@ -14,6 +14,7 @@ type CartItemResponse struct {
 	Quantity  int    `json:"quantity"`
 	Message   string `json:"message,omitempty"` // opsional: info jika quantity dikap karena stok
 }
+
 type CartItemView struct {
 	ProductID int     `json:"product_id"`
 	Name      string  `json:"name"`
@@ -23,9 +24,27 @@ type CartItemView struct {
 }
 
 type CartViewResponse struct {
-	ID        int            `json:"id"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	Items     []CartItemView `json:"items"`
-	Total     float64        `json:"total"`
+	ID         int            `json:"id"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	CouponCode *string        `json:"coupon_code,omitempty"`
+	Discount   float64        `json:"discount"`
+	Items      []CartItemView `json:"items"`
+	Subtotal   float64        `json:"subtotal"`
+	Total      float64        `json:"total"`
+}
+
+type ApplyCouponRequest struct {
+	CouponCode string `json:"coupon_code" validate:"required"`
+}
+
+type CartSummaryResponse struct {
+	ID         int            `json:"id"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	CouponCode *string        `json:"coupon_code,omitempty"`
+	Items      []CartItemView `json:"items"`
+	Subtotal   float64        `json:"subtotal"`
+	Discount   float64        `json:"discount"`
+	Total      float64        `json:"total"`
 }

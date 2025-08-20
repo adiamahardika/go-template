@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"monitoring-service/app/helpers"
+	"monitoring-service/app/models/dto"
 	appmw "monitoring-service/middleware"
 	"net/http"
 	"strconv"
@@ -16,6 +17,11 @@ type CartControllerInterface interface {
 	AddCartItem(c echo.Context) error
 	RemoveCartItem(c echo.Context) error
 	UpdateCartItem(c echo.Context) error
+
+	// New methods for coupon functionality
+	ApplyCoupon(c echo.Context) error
+	RemoveCoupon(c echo.Context) error
+	GetCartSummary(c echo.Context) error
 }
 
 type cartController struct {
@@ -23,60 +29,20 @@ type cartController struct {
 }
 
 func (ctrl *cartController) GetCart(c echo.Context) error {
-    userID, err := appmw.CurrentUserID(c)
-    if err != nil {
-        return helpers.StandardResponse(c, http.StatusUnauthorized, []string{err.Error()}, nil, nil)
-    }
+	userID, err := appmw.CurrentUserID(c)
+	if err != nil {
+		return helpers.StandardResponse(c, http.StatusUnauthorized, []string{err.Error()}, nil, nil)
+	}
 
-    cart, items, err := ctrl.Options.UseCases.Cart.GetCart(c.Request().Context(), userID)
-    if err != nil {
-        return helpers.StandardResponse(c, http.StatusInternalServerError, []string{err.Error()}, nil, nil)
-    }
+	cartSummary, err := ctrl.Options.UseCases.Cart.CalculateCartTotal(c.Request().Context(), userID)
+	if err != nil {
+		return helpers.StandardResponse(c, http.StatusInternalServerError, []string{err.Error()}, nil, nil)
+	}
 
-    // Bentuk ulang items: product_id, name, price, quantity, subtotal
-    viewItems := make([]map[string]interface{}, 0, len(items))
-    var total float64
-
-    for _, it := range items {
-        pid := 0
-        if it.ProductID != nil {
-            pid = *it.ProductID
-        }
-
-        name := ""
-        var price float64
-        if it.Product != nil {
-            name = it.Product.Name
-            price = it.Product.Price
-        }
-
-        subtotal := float64(it.Quantity) * price
-        total += subtotal
-
-        viewItems = append(viewItems, map[string]interface{}{
-            "product_id": pid,
-            "name":       name,
-            "price":      price,
-            "quantity":   it.Quantity,
-            "subtotal":   subtotal,
-        })
-    }
-
-    // Data akhir sesuai spes
-    data := map[string]interface{}{
-        "id":         cart.ID,
-        "created_at": cart.CreatedAt,
-        "updated_at": cart.UpdatedAt,
-        "items":      viewItems,
-        "total":      total,
-    }
-
-    return helpers.StandardResponse(c, http.StatusOK, nil, data, nil)
+	return helpers.StandardResponse(c, http.StatusOK, nil, cartSummary, nil)
 }
 
-
 func (ctrl *cartController) GetCartItems(c echo.Context) error {
-	// Ambil user dari JWT (bukan query param)
 	userID, err := appmw.CurrentUserID(c)
 	if err != nil {
 		return helpers.StandardResponse(c, http.StatusUnauthorized, []string{err.Error()}, nil, nil)
@@ -93,17 +59,12 @@ func (ctrl *cartController) GetCartItems(c echo.Context) error {
 }
 
 func (ctrl *cartController) AddCartItem(c echo.Context) error {
-	// Ambil user dari JWT (bukan query param)
 	userID, err := appmw.CurrentUserID(c)
 	if err != nil {
 		return helpers.StandardResponse(c, http.StatusUnauthorized, []string{err.Error()}, nil, nil)
 	}
 
-	// Body request: product_id & quantity
-	var body struct {
-		ProductID int `json:"product_id"`
-		Quantity  int `json:"quantity"`
-	}
+	var body dto.AddCartItemRequest
 	if err := json.NewDecoder(c.Request().Body).Decode(&body); err != nil {
 		return helpers.StandardResponse(c, http.StatusBadRequest, []string{"invalid json body"}, nil, nil)
 	}
@@ -128,27 +89,23 @@ func (ctrl *cartController) AddCartItem(c echo.Context) error {
 		}
 	}
 
-	data := map[string]any{
-		"id":         item.ID,
-		"cart_id":    item.CartID,
-		"product_id": item.ProductID,
-		"quantity":   item.Quantity,
-	}
-	if message != "" {
-		data["message"] = message
+	data := dto.CartItemResponse{
+		ID:        item.ID,
+		CartID:    *item.CartID,
+		ProductID: *item.ProductID,
+		Quantity:  item.Quantity,
+		Message:   message,
 	}
 
 	return helpers.StandardResponse(c, http.StatusCreated, []string{"Item added to cart"}, data, nil)
 }
 
 func (ctrl *cartController) RemoveCartItem(c echo.Context) error {
-	// Ambil user dari JWT (bukan query param)
 	userID, err := appmw.CurrentUserID(c)
 	if err != nil {
 		return helpers.StandardResponse(c, http.StatusUnauthorized, []string{err.Error()}, nil, nil)
 	}
 
-	// product_id tetap dari query (sesuai requirement)
 	productIDStr := c.QueryParam("product_id")
 	productID, err := strconv.Atoi(productIDStr)
 	if err != nil || productID <= 0 {
@@ -196,17 +153,71 @@ func (ctrl *cartController) UpdateCartItem(c echo.Context) error {
 		return helpers.StandardResponse(c, code, []string{err.Error()}, nil, nil)
 	}
 
-	// build response
-	cartID := 0
-	if item.CartID != nil { cartID = *item.CartID }
-	productID := 0
-	if item.ProductID != nil { productID = *item.ProductID }
-
-	data := map[string]any{
-		"id":         item.ID,
-		"cart_id":    cartID,
-		"product_id": productID,
-		"quantity":   item.Quantity,
+	data := dto.CartItemResponse{
+		ID:        item.ID,
+		CartID:    *item.CartID,
+		ProductID: *item.ProductID,
+		Quantity:  item.Quantity,
 	}
+
 	return helpers.StandardResponse(c, http.StatusOK, []string{"Item updated"}, data, nil)
+}
+
+// New methods for coupon functionality
+func (ctrl *cartController) ApplyCoupon(c echo.Context) error {
+	userID, err := appmw.CurrentUserID(c)
+	if err != nil {
+		return helpers.StandardResponse(c, http.StatusUnauthorized, []string{err.Error()}, nil, nil)
+	}
+
+	var body dto.ApplyCouponRequest
+	if err := json.NewDecoder(c.Request().Body).Decode(&body); err != nil {
+		return helpers.StandardResponse(c, http.StatusBadRequest, []string{"invalid json body"}, nil, nil)
+	}
+	if body.CouponCode == "" {
+		return helpers.StandardResponse(c, http.StatusBadRequest, []string{"coupon_code is required"}, nil, nil)
+	}
+
+	if err := ctrl.Options.UseCases.Cart.ApplyCoupon(c.Request().Context(), userID, body.CouponCode); err != nil {
+		switch err.Error() {
+		case "coupon not found":
+			return helpers.StandardResponse(c, http.StatusNotFound, []string{err.Error()}, nil, nil)
+		case "coupon is not valid or expired":
+			return helpers.StandardResponse(c, http.StatusBadRequest, []string{err.Error()}, nil, nil)
+		default:
+			return helpers.StandardResponse(c, http.StatusInternalServerError, []string{err.Error()}, nil, nil)
+		}
+	}
+
+	return helpers.StandardResponse(c, http.StatusOK, []string{"Coupon applied successfully"}, nil, nil)
+}
+
+func (ctrl *cartController) RemoveCoupon(c echo.Context) error {
+	userID, err := appmw.CurrentUserID(c)
+	if err != nil {
+		return helpers.StandardResponse(c, http.StatusUnauthorized, []string{err.Error()}, nil, nil)
+	}
+
+	if err := ctrl.Options.UseCases.Cart.RemoveCoupon(c.Request().Context(), userID); err != nil {
+		if err.Error() == "cart not found" {
+			return helpers.StandardResponse(c, http.StatusNotFound, []string{err.Error()}, nil, nil)
+		}
+		return helpers.StandardResponse(c, http.StatusInternalServerError, []string{err.Error()}, nil, nil)
+	}
+
+	return helpers.StandardResponse(c, http.StatusOK, []string{"Coupon removed successfully"}, nil, nil)
+}
+
+func (ctrl *cartController) GetCartSummary(c echo.Context) error {
+	userID, err := appmw.CurrentUserID(c)
+	if err != nil {
+		return helpers.StandardResponse(c, http.StatusUnauthorized, []string{err.Error()}, nil, nil)
+	}
+
+	cartSummary, err := ctrl.Options.UseCases.Cart.CalculateCartTotal(c.Request().Context(), userID)
+	if err != nil {
+		return helpers.StandardResponse(c, http.StatusInternalServerError, []string{err.Error()}, nil, nil)
+	}
+
+	return helpers.StandardResponse(c, http.StatusOK, nil, cartSummary, nil)
 }

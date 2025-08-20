@@ -30,11 +30,8 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main, cfg *config.Con
 	cartGroup.DELETE("/items", controller.Cart.RemoveCartItem)
 	cartGroup.PUT("/items/:id", controller.Cart.UpdateCartItem)
 
-
-// cartGroup := e.Group("/api/v1/cart")
-// cartGroup.GET("", controller.Cart.GetCart)
-// cartGroup.GET("/items", controller.Cart.GetCartItems)
-// cartGroup.POST("/items", controller.Cart.AddCartItem)
-// cartGroup.DELETE("/items", controller.Cart.RemoveCartItem)
-
+	// New coupon routes
+	cartGroup.POST("/coupon", controller.Cart.ApplyCoupon)
+	cartGroup.DELETE("/coupon", controller.Cart.RemoveCoupon)
+	cartGroup.GET("/summary", controller.Cart.GetCartSummary)
 }

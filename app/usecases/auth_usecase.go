@@ -5,6 +5,7 @@ import (
 	"errors"
 	"monitoring-service/app/models"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,7 +22,6 @@ type AuthUsecaseInterface interface {
 }
 
 func (u *authUsecase) Login(ctx context.Context, req models.LoginRequest) (*models.AuthResponse, error) {
-
 	user, err := u.Options.Repository.User.GetUserByEmail(req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -30,8 +30,7 @@ func (u *authUsecase) Login(ctx context.Context, req models.LoginRequest) (*mode
 		return nil, err
 	}
 
-	err = CheckPassword(user.Password, req.Password)
-	if err != nil {
+	if err := CheckPassword(user.Password, req.Password); err != nil {
 		return nil, errors.New("Invalid password")
 	}
 
@@ -45,9 +44,15 @@ func (u *authUsecase) Login(ctx context.Context, req models.LoginRequest) (*mode
 		roleNames[i] = role.Name
 	}
 
+	// Generate access token
 	token, err := u.GenerateToken(*user, roleNames)
 	if err != nil {
 		return nil, err
+	}
+
+	// (Opsional) coba set user_id di context runtime saat ini
+	if ctxWithValue, ok := ctx.(interface{ Set(string, interface{}) }); ok {
+		ctxWithValue.Set("user_id", user.ID)
 	}
 
 	userProfile := models.UserProfile{
@@ -85,13 +90,13 @@ func (u *authUsecase) GenerateToken(user models.User, roles []string) (string, e
 	}
 
 	claims := &models.Claims{
-		UserID: user.ID,
+		UserID: user.ID,   // -> serialized sebagai "user_id"
 		Email:  user.Email,
 		Roles:  roles,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expireTime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Subject:   string(rune(user.ID)),
+			Subject:   strconv.Itoa(user.ID), // <- perbaikan (bukan string(rune(...)))
 		},
 	}
 
@@ -147,6 +152,11 @@ func (u *authUsecase) Register(ctx context.Context, req models.RegisterRequest) 
 	token, err := u.GenerateToken(*user, roles)
 	if err != nil {
 		return nil, errors.New("failed to generate access token")
+	}
+
+	// (Opsional) set user id di context saat ini
+	if ctxWithValue, ok := ctx.(interface{ Set(string, interface{}) }); ok {
+		ctxWithValue.Set("user_id", user.ID)
 	}
 
 	userProfile := models.UserProfile{

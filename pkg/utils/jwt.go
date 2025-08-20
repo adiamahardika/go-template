@@ -1,3 +1,5 @@
+// pkg/utils/jwt.go
+
 package utils
 
 import (
@@ -7,16 +9,17 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// GANTI STRUCT INI
 type Claims struct {
-	UserID int    `json:"user_id"`
-	Role   string `json:"role"`
+	UserID int      `json:"user_id"`
+	Roles  []string `json:"roles"` // Ubah dari Role string menjadi Roles []string
 	jwt.RegisteredClaims
 }
 
 func GenerateJWTToken(userID int, role string, secret string, expireTime time.Time) (string, error) {
 	claims := &Claims{
 		UserID: userID,
-		Role:   role,
+		Roles:  []string{role}, // Masukkan ke dalam slice
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expireTime),
 		},

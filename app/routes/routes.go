@@ -37,5 +37,19 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main, cfg *config.Con
 	adminGroup := v1.Group("/admin")
 	adminGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 	adminGroup.Use(middleware.RoleMiddleware("admin"))
-	// Tambahkan route admin di sini nanti
+	adminGroup.GET("/payments", controller.Payment.GetAllPayments)
+	adminGroup.PUT("/payments/:id/status", controller.Payment.UpdatePaymentStatus)
+	
+
+// Rute pembayaran (dilindungi untuk pembeli)
+	paymentGroup := v1.Group("/payments")
+	paymentGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret), middleware.RoleMiddleware("shopper"))
+	paymentGroup.POST("", controller.Payment.CreatePayment)
+	paymentGroup.GET("", controller.Payment.GetUserPayments)
+
+	// Rute admin (dilindungi dan memerlukan peran admin)
+	// adminGroup := v1.Group("/admin")
+	// adminGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret), middleware.RoleMiddleware("admin"))
+	// adminGroup.PATCH("/payments/:id/status", controller.Payment.UpdatePaymentStatus)
+	
 }

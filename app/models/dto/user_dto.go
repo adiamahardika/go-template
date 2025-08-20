@@ -1,10 +1,9 @@
-package models
+package dto
 
 import (
 	"time"
 )
 
-// If the User struct is not defined elsewhere, define it here:
 type User struct {
 	ID        int
 	Name      string
@@ -32,7 +31,6 @@ type Role struct {
 	DeletedAt   *time.Time
 }
 
-// UserResponse represents the user data for API responses (without sensitive fields)
 type UserResponse struct {
 	ID        int        `json:"id"`
 	Name      string     `json:"name"`
@@ -61,7 +59,6 @@ type RoleResponse struct {
 	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
 }
 
-// ToUserResponse converts User model to UserResponse (excluding password)
 func (u *User) ToUserResponse() UserResponse {
 	response := UserResponse{
 		ID:        u.ID,
@@ -72,7 +69,7 @@ func (u *User) ToUserResponse() UserResponse {
 		DeletedAt: u.DeletedAt,
 	}
 
-	// Convert user roles
+
 	for _, ur := range u.UserRoles {
 		userRole := UserRoleResponse{
 			UserID:    ur.UserID,
@@ -80,7 +77,7 @@ func (u *User) ToUserResponse() UserResponse {
 			CreatedAt: ur.CreatedAt,
 		}
 
-		// Convert role if exists
+
 		if ur.Role.ID != 0 {
 			userRole.Role = &RoleResponse{
 				ID:          ur.Role.ID,
@@ -98,7 +95,6 @@ func (u *User) ToUserResponse() UserResponse {
 	return response
 }
 
-// ToUsersResponse converts slice of User models to slice of UserResponse
 func ToUsersResponse(users []User) []UserResponse {
 	responses := make([]UserResponse, len(users))
 	for i, user := range users {
@@ -107,15 +103,12 @@ func ToUsersResponse(users []User) []UserResponse {
 	return responses
 }
 
-// Request DTOs
 
-// GetUsersRequest represents the request for getting users with filters and pagination
 type GetUsersRequest struct {
 	Page     int `json:"page" query:"page"`
 	PageSize int `json:"page_size" query:"page_size"`
 }
 
-// CreateUserRequest represents the request for creating a new user
 type CreateUserRequest struct {
 	Name     string `json:"name" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
@@ -123,7 +116,6 @@ type CreateUserRequest struct {
 	RoleIDs  []int  `json:"role_ids,omitempty"`
 }
 
-// UpdateUserRequest represents the request for updating a user
 type UpdateUserRequest struct {
 	Name    string `json:"name" validate:"required"`
 	Email   string `json:"email" validate:"required,email"`

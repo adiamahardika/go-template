@@ -8,6 +8,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+
+type Claims struct {
+	UserID int      `json:"user_id"`
+	Roles  []string `json:"roles"`
+}	
+
 func AuthMiddleware(secret string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -26,9 +32,15 @@ func AuthMiddleware(secret string) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusUnauthorized, "invalid token")
 			}
 
-			// Set user info ke context
 			c.Set("user_id", claims.UserID)
-			c.Set("role", claims.Role)
+
+			var userRole string
+			if len(claims.Roles) > 0 {
+				userRole = claims.Roles[0]
+			} else {
+				userRole = ""
+			}
+			c.Set("role", userRole)
 
 			return next(c)
 		}

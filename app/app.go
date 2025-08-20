@@ -60,10 +60,14 @@ func (m *Main) Init() (err error) {
 		Config:   m.cfg,
 		Postgres: m.database.Postgres,
 	})
+
+	// Modifikasi bagian inisialisasi usecase
 	m.usecase = usecases.Init(usecases.Options{
 		Config:     m.cfg,
 		Repository: m.repo,
+		Postgres:   m.database.Postgres, 
 	})
+
 	m.controller = controllers.Init(controllers.Options{
 		Config:   m.cfg,
 		UseCases: m.usecase,

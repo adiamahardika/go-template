@@ -18,19 +18,18 @@ type UserRepositoryInterface interface {
 	GetRoleByName(name string) (*models.Role, error)
 	AssignRole(userRole models.UserRole) error
 	CheckEmailExists(email string) (bool, error)
-	GetUserByEmail(email string) (*models.User, error) // Tambahkan method baru
+	GetUserByEmail(email string) (*models.User, error)
+	GetActiveCartByUserID(userID int) (*models.Cart, error)
 }
 
 func (r *userRepository) GetAllUsers(limit, offset int) ([]models.User, int64, error) {
 	var users []models.User
 	var total int64
 
-	// Hitung total user
 	if err := r.Options.Postgres.Model(&models.User{}).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Ambil data user beserta relasi
 	if err := r.Options.Postgres.
 		Preload("UserRoles").
 		Preload("UserRoles.Role").
@@ -48,7 +47,7 @@ func (r *userRepository) GetUserByID(id int) (*models.User, error) {
 	if err := r.Options.Postgres.
 		Preload("UserRoles").
 		Preload("UserRoles.Role").
-		Preload("Carts").
+		Preload("Carts.CartItems.Product").
 		Preload("Orders").
 		First(&user, id).Error; err != nil {
 		return nil, err
@@ -94,7 +93,6 @@ func (r *userRepository) CheckEmailExists(email string) (bool, error) {
 	return count > 0, nil
 }
 
-// Tambahkan implementasi baru
 func (r *userRepository) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
 
@@ -107,4 +105,18 @@ func (r *userRepository) GetUserByEmail(email string) (*models.User, error) {
 	}
 
 	return &user, nil
+}
+
+func (r *userRepository) GetActiveCartByUserID(userID int) (*models.Cart, error) {
+	var cart models.Cart
+	err := r.Options.Postgres.Preload("CartItems.Product").
+	Preload("Coupon").
+	Where("user_id = ?", userID).First(&cart).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &cart, nil
 }

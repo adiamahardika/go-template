@@ -6,9 +6,10 @@ import (
 )
 
 type Main struct {
-	User    UserControllerInterface
-	Auth    AuthControllerInterface
-	Product productControllerInterface
+	User           UserControllerInterface
+	Auth           AuthControllerInterface
+	Product        productControllerInterface
+	ShippingMethod ShippingMethodControllerInterface
 }
 
 type controller struct {
@@ -24,9 +25,10 @@ func Init(opts Options) *Main {
 	ctrl := &controller{opts}
 
 	m := &Main{
-		User:    (*userController)(ctrl),
-		Auth:    (*authController)(ctrl),
-		Product: (*productController)(ctrl),
+		User:           (*userController)(ctrl),
+		Auth:           (*authController)(ctrl),
+		Product:        (*productController)(ctrl),
+		ShippingMethod: NewShippingMethodController(opts.UseCases.ShippingMethod),
 	}
 
 	return m

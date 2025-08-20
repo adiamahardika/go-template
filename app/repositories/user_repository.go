@@ -110,6 +110,7 @@ func (r *userRepository) GetUserByEmail(email string) (*models.User, error) {
 func (r *userRepository) GetActiveCartByUserID(userID int) (*models.Cart, error) {
 	var cart models.Cart
 	err := r.Options.Postgres.Preload("CartItems.Product").
+	Preload("Coupon").
 	Where("user_id = ?", userID).First(&cart).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

@@ -62,7 +62,25 @@ func (u *shippingMethodUsecase) GetCartQuote(userID int, shippingMethodID int) (
 	}
 
 	shippingCost := method.Cost
-	discount := 0.0 
+	discount := 0.0
+	if cart.Coupon != nil {
+		var percent float64
+		if cart.Coupon.DiscountPercent != nil {
+			percent = *cart.Coupon.DiscountPercent
+		}
+		var maxDisc float64
+		if cart.Coupon.MaxDiscount != nil {
+			maxDisc = *cart.Coupon.MaxDiscount
+		}
+
+		discount = itemsTotal * (percent / 100.0)
+		if maxDisc > 0 && discount > maxDisc {
+			discount = maxDisc
+		}
+		if discount < 0 {
+			discount = 0
+		}
+	}
 	grandTotal := itemsTotal + shippingCost - discount
 
 	return &CartQuote{

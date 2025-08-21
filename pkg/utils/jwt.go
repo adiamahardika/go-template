@@ -9,14 +9,14 @@ import (
 
 type Claims struct {
 	UserID int    `json:"user_id"`
-	Role   string `json:"role"`
+	Roles   []string `json:"roles"`
 	jwt.RegisteredClaims
 }
 
 func GenerateJWTToken(userID int, role string, secret string, expireTime time.Time) (string, error) {
 	claims := &Claims{
 		UserID: userID,
-		Role:   role,
+		Roles:  []string{role},
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expireTime),
 		},

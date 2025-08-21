@@ -33,9 +33,18 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main, cfg *config.Con
 
 	productGroup := v1.Group("/product")
 	productGroup.GET("/:id", controller.Product.GetProductByID)
+
+
 	// Admin routes (protected and admin role required)
 	adminGroup := v1.Group("/admin")
-	adminGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
-	adminGroup.Use(middleware.RoleMiddleware("admin"))
-	// Tambahkan route admin di sini nanti
+	adminGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret), middleware.RoleMiddleware("admin"))
+	couponGroup := adminGroup.Group("/coupons")
+	couponGroup.POST("", controller.Coupon.CreateCoupon)
+	couponGroup.GET("", controller.Coupon.GetCoupons)
+	couponGroup.GET("/:id", controller.Coupon.GetCouponByID)
+	couponGroup.PUT("/:id", controller.Coupon.UpdateCoupon)
+	couponGroup.DELETE("/:id", controller.Coupon.DeleteCoupon)
+	
+
+
 }

@@ -2,6 +2,7 @@ package models
 
 import (
 	"time"
+	"gorm.io/gorm"
 )
 
 type Coupon struct {
@@ -12,7 +13,7 @@ type Coupon struct {
 	ExpiredAt       *time.Time `json:"expired_at,omitempty"`
 	CreatedAt       time.Time  `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt       time.Time  `json:"updated_at" gorm:"autoUpdateTime"`
-	DeletedAt       *time.Time `json:"deleted_at,omitempty" gorm:"index"`
+	DeletedAt       gorm.DeletedAt  `json:"deleted_at,omitempty" gorm:"index"`
 
 	// Relationships
 	Orders []Order `json:"orders,omitempty" gorm:"foreignKey:CouponID"`

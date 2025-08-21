@@ -9,6 +9,7 @@ type Main struct {
 	User    UserControllerInterface
 	Auth    AuthControllerInterface
 	Product productControllerInterface
+	Coupon CouponControllerInterface
 }
 
 type controller struct {
@@ -27,7 +28,8 @@ func Init(opts Options) *Main {
 		User:    (*userController)(ctrl),
 		Auth:    (*authController)(ctrl),
 		Product: (*productController)(ctrl),
-	}
+		Coupon:  (*couponController)(ctrl),
+	} 
 
 	return m
 }

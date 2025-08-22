@@ -10,6 +10,7 @@ type Main struct {
 	User     UserRepositoryInterface
 	UserRole UserRolesRepositoryInterface
 	Product  ProductRepositoryInterface
+	Order    OrderRepositoryInterface
 }
 
 type repository struct {
@@ -28,6 +29,7 @@ func Init(opts Options) *Main {
 		User:     (*userRepository)(repo),
 		UserRole: (*userRolesRepository)(repo),
 		Product:  (*productRepository)(repo),
+	Order:    NewOrderRepository(repo),
 	}
 
 	return m

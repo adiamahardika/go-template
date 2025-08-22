@@ -33,6 +33,13 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main, cfg *config.Con
 
 	productGroup := v1.Group("/product")
 	productGroup.GET("/:id", controller.Product.GetProductByID)
+
+	// Order routes (protected)
+	orderGroup := v1.Group("/orders")
+	orderGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+	orderGroup.GET("", controller.Order.GetOrderHistory)
+	orderGroup.GET("/:id", controller.Order.GetOrderDetail)
+
 	// Admin routes (protected and admin role required)
 	adminGroup := v1.Group("/admin")
 	adminGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))

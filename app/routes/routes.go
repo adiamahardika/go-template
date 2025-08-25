@@ -34,4 +34,8 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main, cfg *config.Con
 	cartGroup.POST("/coupon", controller.Cart.ApplyCoupon)
 	cartGroup.DELETE("/coupon", controller.Cart.RemoveCoupon)
 	cartGroup.GET("/summary", controller.Cart.GetCartSummary)
+
+	// Order routes (shopper only)
+	orderGroup := v1.Group("/orders", appmw.JWTRequireRoles(cfg, "shopper"))
+	orderGroup.POST("/checkout", controller.Order.Checkout)
 }

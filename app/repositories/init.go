@@ -10,6 +10,7 @@ type Main struct {
 	User     UserRepositoryInterface
 	UserRole UserRolesRepositoryInterface
 	Cart     CartRepositoryInterface // Tambahkan Cart di sinizzz
+	Order   OrderRepositoryInterface
 }
 
 type repository struct {
@@ -28,6 +29,7 @@ func Init(opts Options) *Main {
 		User:     (*userRepository)(repo),
 		UserRole: (*userRolesRepository)(repo),
 		Cart:     (*cartRepository)(repo), // inisialisasi Cart di sini
+		Order:   (*orderRepository)(repo),
 	}
 
 	return m

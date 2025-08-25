@@ -9,6 +9,7 @@ type Main struct {
 	User UserControllerInterface
 	Auth AuthControllerInterface
 	Cart CartControllerInterface // Tambahkan field ini
+	Order OrderControllerInterface // Tambahkan field OrderControllerInterface
 }
 
 type controller struct {
@@ -27,6 +28,7 @@ func Init(opts Options) *Main {
 		User: (*userController)(ctrl),
 		Auth: (*authController)(ctrl),
 		Cart: (*cartController)(ctrl), // Inisialisasi CartController
+		Order: (*orderController)(ctrl), // Inisialisasi OrderController
 	}
 
 	return m

@@ -6,9 +6,10 @@ import (
 )
 
 type Main struct {
-	User UserUsecaseInterface
-	Auth AuthUsecaseInterface
-	Cart CartUsecaseInterface
+	User  UserUsecaseInterface
+	Auth  AuthUsecaseInterface
+	Cart  CartUsecaseInterface
+	Order OrderUsecaseInterface
 }
 
 type usecase struct {
@@ -24,10 +25,10 @@ func Init(opts Options) *Main {
 	ucs := &usecase{opts}
 
 	m := &Main{
-		User: (*userUsecase)(ucs),
-		Auth: (*authUsecase)(ucs),
-		
-		Cart: &cartUsecase{usecase: ucs},
+		User:  (*userUsecase)(ucs),
+		Auth:  (*authUsecase)(ucs),
+		Cart:  &cartUsecase{usecase: ucs},
+		Order: &orderUsecase{*ucs},
 	}
 
 	return m

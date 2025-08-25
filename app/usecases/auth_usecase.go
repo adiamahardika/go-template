@@ -127,9 +127,11 @@ func (u *authUsecase) Register(ctx context.Context, req models.RegisterRequest) 
 		Password: string(hashedPassword),
 	}
 
-	if err := u.Options.Repository.User.CreateUser(user); err != nil {
+	createdUser, err := u.Options.Repository.User.CreateUser(*user)
+	if err != nil {
 		return nil, errors.New("failed to create user")
 	}
+	user = createdUser
 
 	// Get shopper role
 	shopperRole, err := u.Options.Repository.UserRole.GetRoleByName(ctx, "shopper")

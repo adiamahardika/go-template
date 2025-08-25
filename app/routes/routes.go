@@ -38,4 +38,10 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main, cfg *config.Con
 	adminGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 	adminGroup.Use(middleware.RoleMiddleware("admin"))
 	// Tambahkan route admin di sini nanti
+
+		// Order routes (protected)
+	orderGroup := v1.Group("/orders")
+	orderGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+	orderGroup.POST("/:id/checkout", controller.Order.CheckoutOrder)
+	orderGroup.POST("/:id/cancel", controller.Order.CancelOrder)
 }

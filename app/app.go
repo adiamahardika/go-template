@@ -63,6 +63,7 @@ func (m *Main) Init() (err error) {
 	m.usecase = usecases.Init(usecases.Options{
 		Config:     m.cfg,
 		Repository: m.repo,
+		DB:         m.database.Postgres,
 	})
 	m.controller = controllers.Init(controllers.Options{
 		Config:   m.cfg,

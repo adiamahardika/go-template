@@ -3,12 +3,15 @@ package usecases
 import (
 	"monitoring-service/app/repositories"
 	"monitoring-service/pkg/config"
+
+	"gorm.io/gorm"
 )
 
 type Main struct {
 	User    UserUsecaseInterface
 	Auth    AuthUsecaseInterface
 	Product productUsecaseInterface
+	Order   OrderUsecaseInterface
 }
 
 type usecase struct {
@@ -18,6 +21,7 @@ type usecase struct {
 type Options struct {
 	Repository *repositories.Main
 	Config     *config.Config
+	DB         *gorm.DB
 }
 
 func Init(opts Options) *Main {
@@ -27,6 +31,7 @@ func Init(opts Options) *Main {
 		User:    (*userUsecase)(ucs),
 		Auth:    (*authUsecase)(ucs),
 		Product: (*productUsecase)(ucs),
+		Order:   (*orderUsecase)(ucs),
 	}
 
 	return m

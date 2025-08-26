@@ -4,9 +4,9 @@ import (
 	"monitoring-service/app/controllers"
 	"monitoring-service/pkg/config"
 	"monitoring-service/pkg/middleware"
-
 	"github.com/labstack/echo/v4"
 )
+
 
 func ConfigureRouter(e *echo.Echo, controller *controllers.Main, cfg *config.Config) {
 	// API v1 group
@@ -14,7 +14,7 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main, cfg *config.Con
 
 	// Public routes
 	public := v1.Group("/public")
-	public.POST("/register", controller.User.Register)
+	public.POST("/register", controller.User.Register)	
 
 	// User routes (protected)
 	authGroup := v1.Group("/auth")
@@ -33,9 +33,21 @@ func ConfigureRouter(e *echo.Echo, controller *controllers.Main, cfg *config.Con
 
 	productGroup := v1.Group("/product")
 	productGroup.GET("/:id", controller.Product.GetProductByID)
-	// Admin routes (protected and admin role required)
+
+// Admin routes (protected and admin role required)
 	adminGroup := v1.Group("/admin")
 	adminGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 	adminGroup.Use(middleware.RoleMiddleware("admin"))
-	// Tambahkan route admin di sini nanti
+
+
+// Shipment routes for admin
+	shipmentGroup := e.Group("/api/v1/shipments")
+	shipmentGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+
+
+	// Shipment routes for shoppers
+	orderGroup := v1.Group("/orders")
+	orderGroup.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+	orderGroup.Use(middleware.RoleMiddleware("shopper"))
+	orderGroup.GET("/:id/shipment", controller.Shipment.GetShipmentByOrderID)
 }

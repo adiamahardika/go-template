@@ -1,12 +1,18 @@
 package middleware
 
 import (
-	"monitoring-service/pkg/utils"
-	"net/http"
-	"strings"
+    "errors" 
+    "monitoring-service/pkg/utils"
+    "net/http"
+    "strings"
 
-	"github.com/labstack/echo/v4"
+    "github.com/labstack/echo/v4"
 )
+
+type Claims struct {
+	UserID int      `json:"user_id"`
+	Roles  []string `json:"roles"`
+}	
 
 func AuthMiddleware(secret string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -28,7 +34,14 @@ func AuthMiddleware(secret string) echo.MiddlewareFunc {
 
 			// Set user info ke context
 			c.Set("user_id", claims.UserID)
-			c.Set("role", claims.Role)
+
+			var userRole string
+			if len(claims.Roles) > 0 {
+				userRole = claims.Roles[0]
+			} else {
+				userRole = ""
+			}
+			c.Set("role", userRole)
 
 			return next(c)
 		}
@@ -49,4 +62,21 @@ func RoleMiddleware(allowedRoles ...string) echo.MiddlewareFunc {
 			return echo.NewHTTPError(http.StatusForbidden, "access denied")
 		}
 	}
+}
+
+func GetUserIDFromToken(c echo.Context) (int, error) {
+    user := c.Get("user_id")
+    if user == nil {
+        return 0, errors.New("user_id not found in context")
+    }
+
+    userID, ok := user.(int)
+    if !ok {
+        if userIDFloat, ok := user.(float64); ok {
+            return int(userIDFloat), nil
+        }
+        return 0, errors.New("user_id is not of a valid type in context")
+    }
+
+    return userID, nil
 }

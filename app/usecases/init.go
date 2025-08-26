@@ -9,6 +9,7 @@ type Main struct {
 	User    UserUsecaseInterface
 	Auth    AuthUsecaseInterface
 	Product productUsecaseInterface
+	Shipment ShipmentUsecaseInterface
 }
 
 type usecase struct {
@@ -27,6 +28,7 @@ func Init(opts Options) *Main {
 		User:    (*userUsecase)(ucs),
 		Auth:    (*authUsecase)(ucs),
 		Product: (*productUsecase)(ucs),
+		Shipment: (*shipmentUsecase)(ucs), 
 	}
 
 	return m
